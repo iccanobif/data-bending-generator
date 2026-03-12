@@ -7,6 +7,21 @@
 
     <ImageUploader @image-uploaded="handleImageUpload" />
 
+    <!-- Intensity Control (shown after uploading an image) -->
+    <div v-if="uploadedFile" class="controls-container">
+      <IntensitySlider
+        :intensity="intensity"
+        @update:intensity="handleIntensityChange"
+      />
+      <button
+        class="regenerate-button"
+        @click="regenerateVariants"
+        :disabled="isGenerating"
+      >
+        🔄 Regenerate Variants
+      </button>
+    </div>
+
     <ImageGallery
       v-if="variants.length > 0 || isGenerating"
       :original-image="originalImage"
@@ -22,14 +37,23 @@
 import { ref } from 'vue';
 import ImageUploader from './components/ImageUploader.vue';
 import ImageGallery from './components/ImageGallery.vue';
+import IntensitySlider from './components/IntensitySlider.vue';
 import { GlitchGenerator } from './lib/GlitchGenerator';
 import type { GlitchedImage } from './types';
 
 const originalImage = ref<string | null>(null);
+const uploadedFile = ref<File | null>(null);
 const variants = ref<GlitchedImage[]>([]);
 const isGenerating = ref(false);
+const intensity = ref(5); // Default intensity
 
 const handleImageUpload = async (file: File) => {
+  uploadedFile.value = file;
+  intensity.value = 5; // Reset intensity to default
+  await generateVariants(file, intensity.value);
+};
+
+const generateVariants = async (file: File, targetIntensity: number) => {
   isGenerating.value = true;
   
   // Clear previous variants and revoke their URLs
@@ -39,17 +63,29 @@ const handleImageUpload = async (file: File) => {
   }
   
   // Set original image
-  originalImage.value = URL.createObjectURL(file);
+  if (!originalImage.value) {
+    originalImage.value = URL.createObjectURL(file);
+  }
   
   try {
-    // Generate 10 glitched variants (with default intensity 5)
-    const newVariants = await GlitchGenerator.generateVariants(file, 5, 10);
+    // Generate 10 glitched variants with specified intensity
+    const newVariants = await GlitchGenerator.generateVariants(file, targetIntensity, 10);
     variants.value = newVariants;
   } catch (error) {
     console.error('Error generating glitch variants:', error);
     alert('Failed to generate glitch variants. Please try a different image.');
   } finally {
     isGenerating.value = false;
+  }
+};
+
+const handleIntensityChange = (newIntensity: number) => {
+  intensity.value = newIntensity;
+};
+
+const regenerateVariants = async () => {
+  if (uploadedFile.value) {
+    await generateVariants(uploadedFile.value, intensity.value);
   }
 };
 

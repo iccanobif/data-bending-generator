@@ -1,5 +1,5 @@
 <template>
-  <div class="gallery-container">
+  <div class="gallery-container" @keydown="handleKeyDown" tabindex="0">
     <div class="gallery-header">
       <div>
         <h2>Glitch Variants</h2>
@@ -7,13 +7,36 @@
           {{ selectedCount }} of {{ variants.length }} selected
         </p>
       </div>
-      <button
-        class="download-button"
-        :disabled="selectedCount === 0"
-        @click="$emit('download-selected')"
-      >
-        📥 Download Selected ({{ selectedCount }})
-      </button>
+      <div class="gallery-actions">
+        <label class="show-original-toggle">
+          <input
+            type="checkbox"
+            v-model="showOriginal"
+          />
+          <span>Show Original</span>
+        </label>
+        <button
+          class="action-button"
+          @click="selectAll"
+          :disabled="variants.length === 0"
+        >
+          ☑️ Select All
+        </button>
+        <button
+          class="action-button"
+          @click="deselectAll"
+          :disabled="selectedCount === 0"
+        >
+          ❌ Deselect All
+        </button>
+        <button
+          class="download-button"
+          :disabled="selectedCount === 0"
+          @click="$emit('download-selected')"
+        >
+          📥 Download ({{ selectedCount }})
+        </button>
+      </div>
     </div>
 
     <div v-if="isLoading" class="loading">
@@ -27,7 +50,7 @@
 
     <div v-else class="gallery-grid">
       <!-- Original Image -->
-      <div v-if="originalImage" class="image-card original">
+      <div v-if="originalImage && showOriginal" class="image-card original">
         <div class="image-wrapper">
           <img :src="originalImage" alt="Original image" />
         </div>
@@ -36,11 +59,12 @@
 
       <!-- Glitched Variants -->
       <div
-        v-for="variant in variants"
+        v-for="(variant, index) in variants"
         :key="variant.id"
         class="image-card"
-        :class="{ selected: variant.selected }"
-        @click="$emit('toggle-selection', variant.id)"
+        :class="{ selected: variant.selected, focused: focusedIndex === index }"
+        @click="toggleVariant(index)"
+        :data-index="index"
       >
         <div class="image-wrapper">
           <img :src="variant.blobUrl" :alt="`Glitch variant ${variant.id}`" />
@@ -49,11 +73,15 @@
         <div class="selection-indicator">✓</div>
       </div>
     </div>
+
+    <div v-if="variants.length > 0" class="keyboard-hint">
+      <small>💡 Tip: Use arrow keys to navigate, Space to select, Enter to download</small>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { GlitchedImage } from '../types';
 
 interface Props {
@@ -64,12 +92,154 @@ interface Props {
 
 const props = defineProps<Props>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'toggle-selection', id: string): void;
   (e: 'download-selected'): void;
 }>();
 
+const showOriginal = ref(true);
+const focusedIndex = ref<number>(-1);
+
 const selectedCount = computed(() => {
   return props.variants.filter(v => v.selected).length;
 });
+
+const toggleVariant = (index: number) => {
+  focusedIndex.value = index;
+  emit('toggle-selection', props.variants[index].id);
+};
+
+const selectAll = () => {
+  props.variants.forEach(variant => {
+    if (!variant.selected) {
+      emit('toggle-selection', variant.id);
+    }
+  });
+};
+
+const deselectAll = () => {
+  props.variants.forEach(variant => {
+    if (variant.selected) {
+      emit('toggle-selection', variant.id);
+    }
+  });
+};
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (props.variants.length === 0) return;
+
+  // Initialize focus if not set
+  if (focusedIndex.value === -1 && props.variants.length > 0) {
+    focusedIndex.value = 0;
+  }
+
+  switch (event.key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+      event.preventDefault();
+      focusedIndex.value = Math.min(focusedIndex.value + 1, props.variants.length - 1);
+      scrollToFocused();
+      break;
+    
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      event.preventDefault();
+      focusedIndex.value = Math.max(focusedIndex.value - 1, 0);
+      scrollToFocused();
+      break;
+    
+    case ' ':
+    case 'Spacebar':
+      event.preventDefault();
+      if (focusedIndex.value >= 0 && focusedIndex.value < props.variants.length) {
+        emit('toggle-selection', props.variants[focusedIndex.value].id);
+      }
+      break;
+    
+    case 'Enter':
+      event.preventDefault();
+      if (selectedCount.value > 0) {
+        emit('download-selected');
+      }
+      break;
+    
+    case 'a':
+    case 'A':
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        selectAll();
+      }
+      break;
+  }
+};
+
+const scrollToFocused = () => {
+  if (focusedIndex.value >= 0) {
+    const element = document.querySelector(`[data-index="${focusedIndex.value}"]`);
+    element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+};
+
+// Reset focused index when variants change
+watch(() => props.variants.length, () => {
+  focusedIndex.value = -1;
+});
 </script>
+
+<style scoped>
+.gallery-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.show-original-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.95rem;
+}
+
+.show-original-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.action-button {
+  background: #f3f4f6;
+  color: #333;
+  border: 1px solid #d1d5db;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.action-button:hover:not(:disabled) {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.image-card.focused {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
+}
+
+.keyboard-hint {
+  margin-top: 20px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+</style>
