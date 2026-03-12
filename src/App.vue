@@ -107,7 +107,7 @@ const downloadSelected = () => {
   }
   
   // Download each selected image
-  selected.forEach((variant, index) => {
+  selected.forEach((variant) => {
     const link = document.createElement('a');
     link.href = variant.blobUrl;
     link.download = `glitch_${variant.id.replace('glitch-', '')}.jpg`;

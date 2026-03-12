@@ -1,6 +1,6 @@
 import { DataBender } from './DataBender';
 import { BeautyScorer } from './BeautyScorer';
-import type { GlitchedImage, GlitchOptions, BeautyMetrics } from '../types';
+import type { GlitchedImage, GlitchOptions } from '../types';
 
 /**
  * GlitchGenerator - Orchestrates the generation of multiple glitched variants
