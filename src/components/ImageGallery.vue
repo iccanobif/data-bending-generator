@@ -5,7 +5,6 @@
         <h2>Glitch Variants</h2>
         <p class="gallery-info">
           {{ selectedCount }} of {{ displayedVariants.length }} selected
-          <span v-if="!showAllVariants && variants.length > 5"> (showing top 5 by beauty score)</span>
         </p>
       </div>
       <div class="gallery-actions">
@@ -16,13 +15,6 @@
           />
           <span>Show Original</span>
         </label>
-        <button
-          v-if="variants.length > 5"
-          class="action-button"
-          @click="toggleShowAll"
-        >
-          {{ showAllVariants ? '⭐ Show Top 5' : '🎨 Show All ' + variants.length }}
-        </button>
         <button
           class="action-button"
           @click="selectAll"
@@ -113,7 +105,6 @@ const emit = defineEmits<{
 }>();
 
 const showOriginal = ref(true);
-const showAllVariants = ref(true);
 const focusedIndex = ref<number>(-1);
 
 const selectedCount = computed(() => {
@@ -121,22 +112,13 @@ const selectedCount = computed(() => {
 });
 
 const displayedVariants = computed(() => {
-  if (showAllVariants.value || props.variants.length <= 5) {
-    return props.variants;
-  }
-  // Show only top 5 by beauty score
-  return props.variants.slice(0, 5);
+  return props.variants;
 });
 
 const toggleVariant = (index: number) => {
   focusedIndex.value = index;
-  // Get the actual variant from the full list
   const variantId = displayedVariants.value[index].id;
   emit('toggle-selection', variantId);
-};
-
-const toggleShowAll = () => {
-  showAllVariants.value = !showAllVariants.value;
 };
 
 const selectAll = () => {
