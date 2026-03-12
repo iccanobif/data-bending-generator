@@ -71,7 +71,7 @@ const generateVariants = async (file: File, targetIntensity: number) => {
   
   try {
     // Generate 10 glitched variants with specified intensity
-    const newVariants = await GlitchGenerator.generateVariants(file, targetIntensity, 10);
+    const newVariants = await GlitchGenerator.generateVariants(file, targetIntensity, 100);
     variants.value = newVariants;
   } catch (error) {
     console.error('Error generating glitch variants:', error);
