@@ -14,6 +14,7 @@
         @update:intensity="handleIntensityChange"
       />
       <button
+        type="button"
         class="regenerate-button"
         @click="regenerateVariants"
         :disabled="isGenerating"
