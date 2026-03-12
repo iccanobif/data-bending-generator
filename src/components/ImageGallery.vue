@@ -113,7 +113,7 @@ const emit = defineEmits<{
 }>();
 
 const showOriginal = ref(true);
-const showAllVariants = ref(false);
+const showAllVariants = ref(true);
 const focusedIndex = ref<number>(-1);
 
 const selectedCount = computed(() => {
