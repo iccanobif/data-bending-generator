@@ -1,5 +1,5 @@
 export interface GlitchOptions {
-  intensity: number; // 1-10 (for Phase 2, default to 5 in POC)
+  intensity: number; // 1-10
   seed?: number; // Random seed for reproducibility
 }
 

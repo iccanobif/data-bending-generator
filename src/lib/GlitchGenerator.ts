@@ -11,14 +11,14 @@ export class GlitchGenerator {
   /**
    * Generate multiple glitched variants from a single image
    * @param file - The original JPEG file
-   * @param baseIntensity - Base glitch intensity (1-10), default 5
-   * @param count - Number of variants to generate, default 10
+   * @param baseIntensity - Base glitch intensity (1-10)
+   * @param count - Number of variants to generate
    * @returns Promise resolving to array of glitched images sorted by beauty score
    */
   static async generateVariants(
     file: File,
-    baseIntensity: number = 5,
-    count: number = 10
+    baseIntensity: number,
+    count: number
   ): Promise<GlitchedImage[]> {
     // Read the file as ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
