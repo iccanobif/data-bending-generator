@@ -1,5 +1,6 @@
 import { DataBender } from './DataBender';
-import type { GlitchedImage, GlitchOptions } from '../types';
+import { BeautyScorer } from './BeautyScorer';
+import type { GlitchedImage, GlitchOptions, BeautyMetrics } from '../types';
 
 /**
  * GlitchGenerator - Orchestrates the generation of multiple glitched variants
@@ -12,7 +13,7 @@ export class GlitchGenerator {
    * @param file - The original JPEG file
    * @param baseIntensity - Base glitch intensity (1-10), default 5
    * @param count - Number of variants to generate, default 10
-   * @returns Promise resolving to array of glitched images
+   * @returns Promise resolving to array of glitched images sorted by beauty score
    */
   static async generateVariants(
     file: File,
@@ -50,7 +51,36 @@ export class GlitchGenerator {
       });
     }
 
+    // Analyze beauty scores for all variants
+    await this.analyzeBeauty(variants, file);
+
+    // Sort by beauty score (highest first)
+    variants.sort((a, b) => (b.beautyScore?.overallScore || 0) - (a.beautyScore?.overallScore || 0));
+
+    // Reassign IDs after sorting to maintain proper order
+    variants.forEach((variant, index) => {
+      variant.id = `glitch-${index + 1}`;
+    });
+
     return variants;
+  }
+
+  /**
+   * Analyze beauty scores for all variants
+   * @param variants - Array of glitched images
+   * @param originalFile - The original image file for comparison
+   */
+  private static async analyzeBeauty(
+    variants: GlitchedImage[],
+    originalFile: File
+  ): Promise<void> {
+    // Analyze each variant in parallel
+    const analysisPromises = variants.map(async (variant) => {
+      const metrics = await BeautyScorer.analyzeImage(variant.blob, originalFile);
+      variant.beautyScore = metrics;
+    });
+
+    await Promise.all(analysisPromises);
   }
 
   /**

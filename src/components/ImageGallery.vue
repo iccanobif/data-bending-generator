@@ -4,7 +4,8 @@
       <div>
         <h2>Glitch Variants</h2>
         <p class="gallery-info">
-          {{ selectedCount }} of {{ variants.length }} selected
+          {{ selectedCount }} of {{ displayedVariants.length }} selected
+          <span v-if="!showAllVariants && variants.length > 5"> (showing top 5 by beauty score)</span>
         </p>
       </div>
       <div class="gallery-actions">
@@ -16,9 +17,16 @@
           <span>Show Original</span>
         </label>
         <button
+          v-if="variants.length > 5"
+          class="action-button"
+          @click="toggleShowAll"
+        >
+          {{ showAllVariants ? '⭐ Show Top 5' : '🎨 Show All ' + variants.length }}
+        </button>
+        <button
           class="action-button"
           @click="selectAll"
-          :disabled="variants.length === 0"
+          :disabled="displayedVariants.length === 0"
         >
           ☑️ Select All
         </button>
@@ -59,7 +67,7 @@
 
       <!-- Glitched Variants -->
       <div
-        v-for="(variant, index) in variants"
+        v-for="(variant, index) in displayedVariants"
         :key="variant.id"
         class="image-card"
         :class="{ selected: variant.selected, focused: focusedIndex === index }"
@@ -69,7 +77,14 @@
         <div class="image-wrapper">
           <img :src="variant.blobUrl" :alt="`Glitch variant ${variant.id}`" />
         </div>
-        <div class="image-label">{{ variant.id }}</div>
+        <div class="image-info">
+          <div class="image-label">{{ variant.id }}</div>
+          <div v-if="variant.beautyScore" class="beauty-score">
+            <span class="score-label">Beauty:</span>
+            <span class="score-value">{{ variant.beautyScore.overallScore }}</span>
+            <div class="score-stars">{{ getStars(variant.beautyScore.overallScore) }}</div>
+          </div>
+        </div>
         <div class="selection-indicator">✓</div>
       </div>
     </div>
@@ -98,19 +113,34 @@ const emit = defineEmits<{
 }>();
 
 const showOriginal = ref(true);
+const showAllVariants = ref(false);
 const focusedIndex = ref<number>(-1);
 
 const selectedCount = computed(() => {
   return props.variants.filter(v => v.selected).length;
 });
 
+const displayedVariants = computed(() => {
+  if (showAllVariants.value || props.variants.length <= 5) {
+    return props.variants;
+  }
+  // Show only top 5 by beauty score
+  return props.variants.slice(0, 5);
+});
+
 const toggleVariant = (index: number) => {
   focusedIndex.value = index;
-  emit('toggle-selection', props.variants[index].id);
+  // Get the actual variant from the full list
+  const variantId = displayedVariants.value[index].id;
+  emit('toggle-selection', variantId);
+};
+
+const toggleShowAll = () => {
+  showAllVariants.value = !showAllVariants.value;
 };
 
 const selectAll = () => {
-  props.variants.forEach(variant => {
+  displayedVariants.value.forEach(variant => {
     if (!variant.selected) {
       emit('toggle-selection', variant.id);
     }
@@ -118,18 +148,23 @@ const selectAll = () => {
 };
 
 const deselectAll = () => {
-  props.variants.forEach(variant => {
+  displayedVariants.value.forEach(variant => {
     if (variant.selected) {
       emit('toggle-selection', variant.id);
     }
   });
 };
 
+const getStars = (score: number): string => {
+  const starCount = Math.round(score / 20); // 0-5 stars
+  return '⭐'.repeat(starCount);
+};
+
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (props.variants.length === 0) return;
+  if (displayedVariants.value.length === 0) return;
 
   // Initialize focus if not set
-  if (focusedIndex.value === -1 && props.variants.length > 0) {
+  if (focusedIndex.value === -1 && displayedVariants.value.length > 0) {
     focusedIndex.value = 0;
   }
 
@@ -137,7 +172,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
     case 'ArrowRight':
     case 'ArrowDown':
       event.preventDefault();
-      focusedIndex.value = Math.min(focusedIndex.value + 1, props.variants.length - 1);
+      focusedIndex.value = Math.min(focusedIndex.value + 1, displayedVariants.value.length - 1);
       scrollToFocused();
       break;
     
@@ -151,8 +186,8 @@ const handleKeyDown = (event: KeyboardEvent) => {
     case ' ':
     case 'Spacebar':
       event.preventDefault();
-      if (focusedIndex.value >= 0 && focusedIndex.value < props.variants.length) {
-        emit('toggle-selection', props.variants[focusedIndex.value].id);
+      if (focusedIndex.value >= 0 && focusedIndex.value < displayedVariants.value.length) {
+        emit('toggle-selection', displayedVariants.value[focusedIndex.value].id);
       }
       break;
     
@@ -241,5 +276,40 @@ watch(() => props.variants.length, () => {
   text-align: center;
   color: #666;
   font-style: italic;
+}
+
+.image-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.beauty-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.85rem;
+  padding: 4px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 4px;
+}
+
+.score-label {
+  color: #666;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.score-value {
+  font-weight: bold;
+  color: #667eea;
+  font-size: 1rem;
+}
+
+.score-stars {
+  font-size: 0.85rem;
+  line-height: 1;
 }
 </style>

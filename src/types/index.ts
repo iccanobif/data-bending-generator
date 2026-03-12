@@ -8,7 +8,7 @@ export interface GlitchedImage {
   blobUrl: string;
   blob: Blob;
   selected: boolean;
-  beautyScore?: number; // For Phase 3
+  beautyScore?: BeautyMetrics; // For Phase 3
 }
 
 export interface BeautyMetrics {

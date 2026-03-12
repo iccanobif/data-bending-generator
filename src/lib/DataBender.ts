@@ -29,7 +29,11 @@ export class DataBender {
     // Calculate how many bytes to modify based on intensity
     const scanDataLength = scanEnd - scanStart;
     const intensity = options.intensity || 5; // Default intensity 5/10
-    const bytesToModify = Math.floor(scanDataLength * (intensity / 100));
+    
+    // More conservative intensity calculation:
+    // Intensity 1 = 0.2% of bytes, Intensity 10 = 2% of bytes
+    // This keeps glitches subtle and preserves recognizable shapes
+    const bytesToModify = Math.floor(scanDataLength * (intensity / 500));
 
     // Use seed for reproducibility if provided
     const random = this.seededRandom(options.seed || Date.now());
@@ -40,19 +44,20 @@ export class DataBender {
       
       // Avoid modifying marker bytes (0xFF) to prevent complete corruption
       if (glitchedBytes[position] !== 0xFF) {
-        // Random modification strategies
-        const strategy = Math.floor(random() * 3);
+        // Random modification strategies - weighted toward subtler changes
+        const strategy = Math.floor(random() * 10);
         
-        switch (strategy) {
-          case 0: // Random value
-            glitchedBytes[position] = Math.floor(random() * 256);
-            break;
-          case 1: // Bit flip
-            glitchedBytes[position] ^= Math.floor(random() * 256);
-            break;
-          case 2: // Shift
-            glitchedBytes[position] = (glitchedBytes[position] + Math.floor(random() * 50)) % 256;
-            break;
+        if (strategy < 6) {
+          // 60% chance: Small shift (most subtle)
+          const shift = Math.floor(random() * 30) - 15; // -15 to +15
+          glitchedBytes[position] = (glitchedBytes[position] + shift + 256) % 256;
+        } else if (strategy < 9) {
+          // 30% chance: Bit flip (medium effect)
+          const bitMask = 1 << Math.floor(random() * 8);
+          glitchedBytes[position] ^= bitMask;
+        } else {
+          // 10% chance: Random value (most dramatic)
+          glitchedBytes[position] = Math.floor(random() * 256);
         }
       }
     }
@@ -98,13 +103,15 @@ export class DataBender {
     const length = endPos - startPos;
     
     const intensity = options.intensity || 5;
-    const bytesToModify = Math.floor(length * (intensity / 200)); // More conservative
+    const bytesToModify = Math.floor(length * (intensity / 1000)); // Very conservative
     const random = this.seededRandom(options.seed || Date.now());
 
     for (let i = 0; i < bytesToModify; i++) {
       const position = startPos + Math.floor(random() * length);
       if (bytes[position] !== 0xFF) {
-        bytes[position] = Math.floor(random() * 256);
+        // Use subtle modifications
+        const shift = Math.floor(random() * 30) - 15;
+        bytes[position] = (bytes[position] + shift + 256) % 256;
       }
     }
 
