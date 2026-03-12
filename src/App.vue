@@ -39,6 +39,7 @@ import { ref } from 'vue';
 import ImageUploader from './components/ImageUploader.vue';
 import ImageGallery from './components/ImageGallery.vue';
 import IntensitySlider from './components/IntensitySlider.vue';
+import { DEFAULT_INTENSITY } from './constants/glitch';
 import { GlitchGenerator } from './lib/GlitchGenerator';
 import type { GlitchedImage } from './types';
 
@@ -46,11 +47,11 @@ const originalImage = ref<string | null>(null);
 const uploadedFile = ref<File | null>(null);
 const variants = ref<GlitchedImage[]>([]);
 const isGenerating = ref(false);
-const intensity = ref(5); // Default intensity
+const intensity = ref(DEFAULT_INTENSITY); // Default intensity
 
 const handleImageUpload = async (file: File) => {
   uploadedFile.value = file;
-  intensity.value = 5; // Reset intensity to default
+  intensity.value = DEFAULT_INTENSITY; // Reset intensity to default
   await generateVariants(file, intensity.value);
 };
 

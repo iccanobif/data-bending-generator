@@ -1,4 +1,5 @@
 import type { GlitchOptions } from '../types';
+import { DEFAULT_INTENSITY } from '../constants/glitch';
 
 /**
  * DataBender - Core JPEG byte manipulation engine
@@ -28,7 +29,7 @@ export class DataBender {
 
     // Calculate how many bytes to modify based on intensity
     const scanDataLength = scanEnd - scanStart;
-    const intensity = options.intensity || 5; // Default intensity 5/10
+    const intensity = options.intensity ?? DEFAULT_INTENSITY;
     
     // More conservative intensity calculation:
     // Intensity 1 = 0.2% of bytes, Intensity 10 = 2% of bytes
@@ -102,7 +103,7 @@ export class DataBender {
     const endPos = bytes.length - 2; // Preserve last 2 bytes (EOI marker)
     const length = endPos - startPos;
     
-    const intensity = options.intensity || 5;
+    const intensity = options.intensity ?? DEFAULT_INTENSITY;
     const bytesToModify = Math.floor(length * (intensity / 1000)); // Very conservative
     const random = this.seededRandom(options.seed || Date.now());
 

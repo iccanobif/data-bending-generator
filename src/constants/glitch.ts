@@ -1,0 +1,1 @@
+export const DEFAULT_INTENSITY = 1;
