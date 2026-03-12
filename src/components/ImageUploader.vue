@@ -40,6 +40,9 @@
         <button type="button" class="upload-button" @click="captureFromCamera">
           Capture Photo
         </button>
+        <button type="button" class="upload-button flip-button" @click="flipCamera">
+          🔄 Flip Camera
+        </button>
         <button type="button" class="action-close-button" @click="stopCamera">
           Close Camera
         </button>
@@ -66,6 +69,7 @@ const errorMessage = ref<string | null>(null);
 const isCameraOpen = ref(false);
 const isCameraStarting = ref(false);
 const mediaStream = ref<MediaStream | null>(null);
+const cameraFacingMode = ref<'user' | 'environment'>('environment');
 
 const triggerFileInput = () => {
   fileInput.value?.click();
@@ -136,10 +140,11 @@ const startCamera = async () => {
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: { facingMode: cameraFacingMode.value },
         audio: false,
       });
     } catch {
+      // Fallback to any available camera if specific facing mode fails
       stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false,
@@ -148,7 +153,7 @@ const startCamera = async () => {
 
     mediaStream.value = stream;
     isCameraOpen.value = true;
-    await nextTick(); // v-ifでDOMが更新されるのを待つ
+    await nextTick();
 
     if (videoElement.value) {
       videoElement.value.srcObject = stream;
@@ -177,6 +182,17 @@ const stopCamera = () => {
 
   isCameraOpen.value = false;
   isCameraStarting.value = false;
+};
+
+const flipCamera = async () => {
+  // Toggle facing mode
+  cameraFacingMode.value = cameraFacingMode.value === 'user' ? 'environment' : 'user';
+  
+  // Stop current stream
+  stopCamera();
+  
+  // Start with new facing mode
+  await startCamera();
 };
 
 const canvasToJpegBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
@@ -280,6 +296,13 @@ onBeforeUnmount(() => {
 
 .action-close-button:hover {
   background: #e5e7eb;
+}
+
+.flip-button {
+  background: #fbbf24;
+  color: #333;
+  border: none;
+  font-weight: 600;
 }
 
 .error-message {
