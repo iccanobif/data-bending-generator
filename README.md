@@ -5,6 +5,7 @@ A web application that creates glitch art through JPEG byte manipulation. Upload
 ## Features (Phase 1 - POC)
 
 - ✅ Upload JPEG images
+- ✅ Capture JPEG images directly from webcam
 - ✅ Generate 10 glitched variants using random byte manipulation
 - ✅ Select multiple variants
 - ✅ Download selected images as JPEG files
@@ -14,9 +15,10 @@ A web application that creates glitch art through JPEG byte manipulation. Upload
 ## How It Works
 
 1. **Upload**: Choose a JPEG image (max 10MB)
-2. **Generate**: The app automatically creates 10 glitched variants
-3. **Select**: Click on images to select/deselect your favorites
-4. **Download**: Click "Download Selected" to save chosen variants
+2. **Capture (optional)**: Use "Use Webcam" to shoot a picture directly in the browser
+3. **Generate**: The app automatically creates 10 glitched variants
+4. **Select**: Click on images to select/deselect your favorites
+5. **Download**: Click "Download Selected" to save chosen variants
 
 ## Technical Details
 
@@ -60,7 +62,7 @@ npm run preview
 ### Usage
 
 1. Open the app in your browser (usually http://localhost:3000)
-2. Click "Choose File" and select a JPEG image
+2. Click "Choose File" and select a JPEG image, or click "Use Webcam" and capture a photo
 3. Wait a few seconds for glitch variants to generate
 4. Click on variants to select them (green border indicates selection)
 5. Click "Download Selected" to save your favorites
