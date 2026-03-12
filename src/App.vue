@@ -62,10 +62,11 @@ const generateVariants = async (file: File, targetIntensity: number) => {
     variants.value = [];
   }
   
-  // Set original image
-  if (!originalImage.value) {
-    originalImage.value = URL.createObjectURL(file);
+  // Update original image (revoke old URL first to prevent memory leaks)
+  if (originalImage.value) {
+    URL.revokeObjectURL(originalImage.value);
   }
+  originalImage.value = URL.createObjectURL(file);
   
   try {
     // Generate 10 glitched variants with specified intensity
